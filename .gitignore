@@ -1,0 +1,25 @@
+# Configuración privada (contraseña y administradores)
+config_local.json
+.env
+
+# Base de datos con el contenido del archivo
+*.db
+*.sqlite
+*.sqlite3
+
+# Archivos del archivo documental (se crean solos al arrancar la app)
+fotos_archivo/
+videos_archivo/
+pdfs_archivo/
+personas_archivo/
+
+# Programa compilado
+*.exe
+build/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
