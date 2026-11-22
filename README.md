@@ -1,12 +1,10 @@
-# Archivo histórico
-Código para desarrollar un archivo histórico. Es una aplicación web local hecha con Python (Flask) y SQLite. 
-Aquí solo está el código. La base de datos y los archivos no se publican; la estructura de la base de datos está en `schema.sql`.
-
-## Cómo ejecutarlo
-1. Instala Flask: `pip install flask`
-2. Copia `config_local.example.json` como `config_local.json` y escribe tu contraseña y tu correo de administrador.
-3. Ejecuta: `python lanzar.py`
-
---> Se abre en http://127.0.0.1:5000
-## Autor
+## Historical Archive
+Code to build a historical archive. It is a local web application made with Python (Flask) and SQLite.
+Only the code is published here. The database and the archive files are not included; the database structure is in `schema.sql`.
+### How to run it
+1. Install Flask: `pip install flask`
+2. Copy `config_local.example.json` to `config_local.json` and enter your password and your administrator email.
+3. Run: `python lanzar.py`
+It opens at http://127.0.0.1:5000
+####
 LSFG
