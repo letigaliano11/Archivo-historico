@@ -1,28 +1,7 @@
 """
-ARCHIVO HISTÓRICO - Erwin Rommel
-=====================================
-Ejecuta este archivo con: python app.py
-Para acceso desde el móvil (misma red WiFi): python app.py --host
-
+ARCHIVO HISTÓRICO - LSFG
 Instalación previa:
     pip install flask pillow
-
-ACCESO:
-  La contraseña y los administradores se configuran en config_local.json
-  (ver config_local.example.json; ese archivo no se sube a GitHub).
-    → Cualquier otro correo con la contraseña entra como lector.
-
-NOVEDADES v2:
-  - Sección de vídeos (MP4, WebM, MOV, AVI, MKV)
-  - Sistema QR: cada foto tiene /ficha/<id> con su QR imprimible
-  - Página /qr-etiquetas para imprimir todas las etiquetas de golpe
-
-NOVEDADES v3:
-  - Ordenación manual de fotos dentro del mismo día (drag & drop)
-
-NOVEDADES v4:
-  - Descarga de fotos y vídeos individuales
-  - Descarga de la colección completa en ZIP (fotos, vídeos o todo)
 """
 
 import argparse
@@ -38,15 +17,12 @@ from collections import defaultdict
 import json
 import hmac
 
-# ─── ARGUMENTOS ──────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser()
 parser.add_argument("--host", action="store_true", help="Escucha en 0.0.0.0 (acceso en red)")
 args, _ = parser.parse_known_args()
 HOST = "0.0.0.0" if args.host else "127.0.0.1"
 
-# ─── CONFIGURACIÓN ────────────────────────────────────────────────────────────
 app = Flask(__name__)
-# La clave de sesión se define más abajo, en AUTENTICACIÓN.
 
 UPLOAD_FOLDER  = "fotos_archivo"
 import sys
@@ -73,7 +49,6 @@ os.makedirs(PDFS_FOLDER, exist_ok=True)
 os.makedirs(os.path.join(BASE_DIR, "personas_archivo"), exist_ok=True)
 app.config["PERSONAS_FOLDER"] = os.path.join(BASE_DIR, "personas_archivo")
 
-# ─── AUTENTICACIÓN ────────────────────────────────────────────────────────────
 def _cargar_config():
     # Lee config_local.json (junto a este archivo). No se sube a GitHub.
     ruta = os.path.join(BASE_DIR, "config_local.json")
@@ -112,9 +87,6 @@ def solo_admin(f):
             abort(403)
         return f(*args, **kwargs)
     return decorated
-
-
-# ─── BASE DE DATOS ─────────────────────────────────────────────────────────────
 def get_db():
     db = sqlite3.connect(os.path.join(BASE_DIR, "archivo_iigm.db"))
     db.row_factory = sqlite3.Row
@@ -149,7 +121,6 @@ def init_db():
     if "identificador" not in cols: db.execute("ALTER TABLE fotografias ADD COLUMN identificador TEXT")
     db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_fotografias_identificador ON fotografias(identificador) WHERE identificador IS NOT NULL")
 
-    # Artículos del blog
     db.execute("""
         CREATE TABLE IF NOT EXISTS articulos (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -167,7 +138,6 @@ def init_db():
         )
     """)
 
-    # Tabla de vídeos
     db.execute("""
         CREATE TABLE IF NOT EXISTS videos (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -185,7 +155,6 @@ def init_db():
         )
     """)
     
-# Documentos de investigación (PDF o imágenes de periódicos)
     db.execute("""
         CREATE TABLE IF NOT EXISTS investigacion (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -206,7 +175,6 @@ def init_db():
     if "periodico"    not in cols_inv: db.execute("ALTER TABLE investigacion ADD COLUMN periodico TEXT")
     if "pagina"       not in cols_inv: db.execute("ALTER TABLE investigacion ADD COLUMN pagina TEXT")
     
-# Personas (fichas biográficas)
     db.execute("""
         CREATE TABLE IF NOT EXISTS personas (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -231,7 +199,6 @@ def init_db():
         )
     """)
 
-    # Relación fotografías <-> documentos de investigación
     db.execute("""
         CREATE TABLE IF NOT EXISTS fotografias_investigacion (
             id                INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -241,7 +208,6 @@ def init_db():
         )
     """)
 
-    # Hitos de una persona: ascensos/rangos y condecoraciones (estilo "infobox" de Wikipedia)
     db.execute("""
         CREATE TABLE IF NOT EXISTS hitos_persona (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,7 +221,6 @@ def init_db():
         )
     """)
 
-    # Tabla de bibliografía / fuentes
     db.execute("""
         CREATE TABLE IF NOT EXISTS bibliografia (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -271,9 +236,6 @@ def init_db():
         )
     """)
 
-    # Afirmaciones históricas: certeza y fuente de cada DATO CONCRETO (no de la fuente en
-    # su conjunto, sino del hecho puntual: "esta fecha", "esta ubicación"...).
-    # Se añade como capa aparte, sin tocar ninguna tabla existente.
     db.execute("""
         CREATE TABLE IF NOT EXISTS afirmaciones (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -291,7 +253,6 @@ def init_db():
     db.commit()
     db.close()
 
-# Niveles de certeza admitidos para las afirmaciones históricas.
 NIVELES_CERTEZA = {
     "confirmado":    {"label": "✔ Confirmado",    "color": "#3d6b2a"},
     "probable":      {"label": "◐ Probable",      "color": "#8a7a2a"},
@@ -455,7 +416,6 @@ def nav(active=""):
         desc="active" if active=="descargas" else "",
     )
 
-# ─── MODAL DETALLE FOTOGRAFÍAS ────────────────────────────────────────────────
 MODAL_DETALLE_HTML = """
 <div class="overlay" id="modal-detalle">
   <div class="modal">
@@ -532,8 +492,6 @@ function verDetalle(id) {
   });
 }
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # LOGIN PAGE
 # ══════════════════════════════════════════════════════════════════════════════
@@ -600,8 +558,6 @@ input::placeholder{color:#4a3e30;}
 </body>
 </html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # GALERÍA
 # ══════════════════════════════════════════════════════════════════════════════
@@ -973,8 +929,6 @@ function guardarOrden(){
 </script>
 </body></html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # FOTOS (cuadrícula pura) — con drag & drop para ordenar
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1227,8 +1181,6 @@ const ADMIN = false;
 </script>
 </body></html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # VÍDEOS
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1469,8 +1421,6 @@ function confirmarBorrarVideo(id,titulo){
 </script>
 </body></html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # FICHA DE FOTOGRAFÍA + QR
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1881,10 +1831,8 @@ async function guardarCerteza(campo) {
 </script>
 </body></html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
-# ETIQUETAS EN MASA
+# ETIQUETAS
 # ══════════════════════════════════════════════════════════════════════════════
 HTML_QR_ETIQUETAS = """
 <!DOCTYPE html><html lang="es"><head>
@@ -1965,8 +1913,6 @@ fotos.forEach(f => {
 </script>
 </body></html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # LÍNEA TEMPORAL
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2036,8 +1982,6 @@ body{background:#111008;color:#e8dfc8;}
 </div>
 </body></html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # MAPA
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2158,10 +2102,8 @@ actualizarSlider(document.getElementById('time-slider').value);
 </script>
 </body></html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
-# BLOG / DIARIO
+# BLOG 
 # ══════════════════════════════════════════════════════════════════════════════
 HTML_BLOG = """
 <!DOCTYPE html><html><head>
@@ -2460,10 +2402,8 @@ function abrirEditarBlog(id, titulo, contenido, fotosIds){
 </script>
 </body></html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
-# DESCARGAS (página central de descarga masiva)
+# DESCARGAS 
 # ══════════════════════════════════════════════════════════════════════════════
 HTML_DESCARGAS = """
 <!DOCTYPE html><html lang="es"><head>
@@ -2537,8 +2477,6 @@ HTML_DESCARGAS = """
 </p>
 </body></html>
 """
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # RUTAS: LOGIN / LOGOUT
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2573,8 +2511,6 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # RUTAS: GALERÍA
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2718,7 +2654,6 @@ def guardar_orden():
     db.close()
     return jsonify({"ok": True})
 
-
 # ══════════════════════════════════════════════════════════════════════════════
 # RUTAS: DESCARGAS (individuales y en ZIP)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2819,7 +2754,6 @@ def descargar_zip(modo):
     }[modo]
     return send_file(buffer, mimetype="application/zip",
                       as_attachment=True, download_name=nombre_zip)
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # RUTAS: FICHA QR
@@ -2955,7 +2889,6 @@ def borrar_video(id):
     db.execute("DELETE FROM videos WHERE id=?", (id,))
     db.commit(); db.close()
     return jsonify({"ok": True})
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # RUTAS: LÍNEA TEMPORAL
@@ -4003,7 +3936,6 @@ def blog():
         articulos.append(d)
     articulos.sort(key=lambda a: a["fecha_historica"] or "9999-99-99")
 
-    # Agrupar por año para mostrarlo como archivo desplegable
     grupos = defaultdict(list)
     for art in articulos:
         anio = art["fecha_historica"][:4] if art["fecha_historica"] else "Sin fecha"
@@ -4046,7 +3978,6 @@ def borrar_blog(id):
     db.execute("DELETE FROM articulos WHERE id=?", (id,))
     db.commit(); db.close()
     return redirect(url_for("blog"))
-
 # ══════════════════════════════════════════════════════════════════════════════
 # RUTAS: INVESTIGACIÓN (PDFs)
 # ══════════════════════════════════════════════════════════════════════════════
