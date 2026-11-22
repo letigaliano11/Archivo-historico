@@ -8,5 +8,5 @@ Aquí solo está el código. La base de datos y los archivos no se publican; la 
 3. Ejecuta: `python lanzar.py`
 
 --> Se abre en http://127.0.0.1:5000
-## Autora
+## Autor
 LSFG
